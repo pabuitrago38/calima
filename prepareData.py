@@ -1,14 +1,9 @@
 from argparse import ArgumentParser
 from datetime import datetime
 
-if __name__ == "__main__":
+def prepare(in_data_file):
 
-  parser = ArgumentParser()
-  parser.add_argument('--in_data_file', default='../CalimaData/rawData1-P-filled.txt')
-  parser.add_argument('--out_data_file', default='..CalimaData/tryitout.txt')
-  args = parser.parse_args()
-
-  with open(args.in_data_file) as f:
+  with open(in_data_file) as f:
     lines = f.read().splitlines()
 
   # Cut out the header.
@@ -62,7 +57,7 @@ if __name__ == "__main__":
 
     if Submit < datetime.strptime('2018-04-01T00:00:00', '%Y-%m-%dT%X'):
       continue  # Dates before April.
-      
+
     GroupCategories.add(Group)
     PartitionCategories.add(Partition)
     ReqGRESCategories.add(ReqGRES)
@@ -89,21 +84,34 @@ if __name__ == "__main__":
       'EligibleWait': EligibleWait,
     })
 
-print 'GroupCategories', len(GroupCategories), GroupCategories
-print 'PartitionCategories', len(PartitionCategories), PartitionCategories
-print 'ReqGRESCategories', len(ReqGRESCategories), ReqGRESCategories
-print 'ReqMemTypeCategories', len(ReqMemTypeCategories), ReqMemTypeCategories
-print 'ReqGPUCategories', len(ReqGPUCategories), ReqGPUCategories
-print 'QOSCategories', len(QOSCategories), QOSCategories
+  return data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories
 
-print 'total', len(data)
 
-def printRange(name):
-  print '"%s" range' % name, min([x[name] for x in data]), '-', max([x[name] for x in data])
-printRange('Start')
-printRange('ReqCPUS')
-printRange('ReqMem')
-printRange('ReqNodes')
-printRange('Timelimit')
-printRange('RealWait')
-printRange('EligibleWait')
+
+if __name__ == "__main__":
+
+  parser = ArgumentParser()
+  parser.add_argument('--in_data_file', default='../CalimaData/rawData1-P-filled.txt')
+  args = parser.parse_args()
+
+  data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(args.in_data_file)
+
+  print 'GroupCategories', len(GroupCategories), GroupCategories
+  print 'PartitionCategories', len(PartitionCategories), PartitionCategories
+  print 'ReqGRESCategories', len(ReqGRESCategories), ReqGRESCategories
+  print 'ReqMemTypeCategories', len(ReqMemTypeCategories), ReqMemTypeCategories
+  print 'ReqGPUCategories', len(ReqGPUCategories), ReqGPUCategories
+  print 'QOSCategories', len(QOSCategories), QOSCategories
+
+  print 'total', len(data)
+
+  def printRange(name):
+    print '"%s" range' % name, min([x[name] for x in data]), '-', max([x[name] for x in data])
+  printRange('Start')
+  printRange('ReqCPUS')
+  printRange('ReqMem')
+  printRange('ReqNodes')
+  printRange('Timelimit')
+  printRange('RealWait')
+  print max([x['RealWait'] for x in data]).total_seconds()
+  printRange('EligibleWait')
