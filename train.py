@@ -91,7 +91,7 @@ def load_network(load_path, network):
 trainset = Dataset(
     in_data_file=args.in_data_file)
 trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=args.batch_size, shuffle=False, num_workers=2)
+    trainset, batch_size=args.batch_size, shuffle=True, num_workers=2)
 
 # Model.
 
@@ -129,7 +129,7 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
 
     # forward + backward + optimize
     ## Calls forward function
-    outputs = net(features)
+    outputs = torch.squeeze(net(features))
     loss = criterion(outputs, labels)
     loss.backward()
     optimizer.step()
