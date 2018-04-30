@@ -14,7 +14,9 @@ from prepareData import prepare
 
 
 class Dataset(Dataset):
-  def __init__(self, in_data_file):
+  def __init__(self, in_data_file, output_raw=False):
+    self.output_raw = output_raw
+
     self.data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(in_data_file)
     self.GroupCategories = list(GroupCategories)
     self.PartitionCategories = list(PartitionCategories)
@@ -35,6 +37,12 @@ class Dataset(Dataset):
 
   def __getitem__(self, index):
     item = self.data[index]
+
+    # Log on the output.
+    item['RealWait'] = item['RealWait'].total_seconds()
+    item['EligibleWait'] = item['EligibleWait'].total_seconds()
+
+    # Make a feature, including transform to onehot vector.
     sample = []
     sample += self.to_onehot(item['Group'], self.GroupCategories)
     sample += self.to_onehot(item['Partition'], self.PartitionCategories)
@@ -46,9 +54,18 @@ class Dataset(Dataset):
     sample += self.to_onehot(item['ReqGPU'], self.ReqGPUCategories)
     sample.append(item['Timelimit'] / 336.)
     sample += self.to_onehot(item['QOS'], self.QOSCategories)
-    label = np.log(item['RealWait'].total_seconds() + 1)
-      # 'EligibleWait': EligibleWait,
-    return {'sample': np.array(sample, dtype=np.float32), 'label': np.array([label], dtype=np.float32)}
+    label = np.log(item['RealWait'] + 1)
+
+    if self.output_raw:
+      return {'sample': np.array(sample, dtype=np.float32), 
+              'label': np.array([label], dtype=np.float32),
+              'item': item,
+            }
+    else:
+      return {'sample': np.array(sample, dtype=np.float32), 
+              'label': np.array([label], dtype=np.float32),
+            }
+
 
 
 

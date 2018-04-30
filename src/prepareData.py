@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from datetime import datetime
+import numpy as np
 
 def prepare(in_data_file):
 
@@ -25,13 +26,15 @@ def prepare(in_data_file):
     Partition = words[2]
     ReqCPUS = int(words[3])
     ReqGRES = words[4]
+    if ReqGRES == '':
+      ReqGRES = 'None'
     ReqMem = words[5]
     ReqMemType = ReqMem[-2:]
     ReqMem = int(ReqMem[:-2])
     ReqNodes = int(words[6])
     ReqGPU = words[7].split('/')[-1]
     if ReqGPU[:3] != 'gpu':
-      ReqGPU = ''
+      ReqGPU = '0'
     assert len(words[8]) > 0
     Timelimit = words[8].split(':')[0]
     if '-' in Timelimit:
@@ -55,7 +58,7 @@ def prepare(in_data_file):
     RealWait = Start - Submit
     EligibleWait = Start - Eligible
 
-    if Submit < datetime.strptime('2018-04-01T00:00:00', '%Y-%m-%dT%X'):
+    if Submit < datetime.strptime('2018-04-12T00:00:00', '%Y-%m-%dT%X'):
       continue  # Dates before April.
 
     GroupCategories.add(Group)
@@ -92,6 +95,7 @@ if __name__ == "__main__":
 
   parser = ArgumentParser()
   parser.add_argument('--in_data_file', default='../CalimaData/rawData1-P-filled.txt')
+  parser.add_argument('--out_data_file', default='../CalimaData/rawData1-P-filled-human-readable.txt')
   args = parser.parse_args()
 
   data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(args.in_data_file)
@@ -115,3 +119,48 @@ if __name__ == "__main__":
   printRange('RealWait')
   print max([x['RealWait'] for x in data]).total_seconds()
   printRange('EligibleWait')
+
+
+  # Print a human readable file with the data
+  SEP = ' '
+  with open(args.out_data_file, 'w') as f:
+
+    # Print the names of features to file.
+    features = ['Group', 'Partition','ReqCPUS', 'ReqGRES','ReqMemType','ReqMem','ReqNodes','ReqGPU','Timelimit','QOS','RealWait','EligibleWait']
+
+    for feat in features:
+      f.write('%s%s' % (feat, SEP))
+    f.write('\n')
+
+    # Print values.
+
+    for item in data:
+      
+      # sample += self.to_onehot(item['Group'], self.GroupCategories)
+      # sample += self.to_onehot(item['Partition'], self.PartitionCategories)
+      # sample.append(item['ReqCPUS'] / 896.)
+      # sample += self.to_onehot(item['ReqGRES'], self.ReqGRESCategories)
+      # sample += self.to_onehot(item['ReqMemType'], self.ReqMemTypeCategories)
+      # sample.append(item['ReqMem'] / 12288000.)
+      # sample.append(item['ReqNodes'] / 32.)
+      # sample += self.to_onehot(item['ReqGPU'], self.ReqGPUCategories)
+      # sample.append(item['Timelimit'] / 336.)
+      # sample += self.to_onehot(item['QOS'], self.QOSCategories)
+      # label = np.log(item['RealWait'].total_seconds() + 1)
+      # features = ['Group', 'Partition','ReqCPUS', 'ReqGRES','ReqMemType','ReqMem','ReqNodes','ReqGPU','Timelimit','QOS','RealWait','EligibleWait']
+
+      f.write('%s%s' % (item['Group'], SEP))
+      f.write('%s%s' % (item['Partition'], SEP))
+      f.write('%s%s' % (item['ReqCPUS'] / 896., SEP))
+      f.write('%s%s' % (item['ReqGRES'], SEP))
+      f.write('%s%s' % (item['ReqMemType'], SEP))
+      f.write('%s%s' % (item['ReqMem'] / 12288000., SEP))
+      f.write('%s%s' % (item['ReqNodes'] / 32., SEP))
+      f.write('%s%s' % (item['ReqGPU'], SEP))
+      f.write('%s%s' % (item['Timelimit'] / 336., SEP))
+      f.write('%s%s' % (item['QOS'], SEP))
+      f.write('%s%s' % (np.log(item['RealWait'].total_seconds() + 1), SEP))
+      f.write('%s%s' % (np.log(item['EligibleWait'].total_seconds() + 1), SEP))
+
+      f.write('\n')
+      
