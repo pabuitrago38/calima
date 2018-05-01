@@ -20,7 +20,8 @@ class Dataset(Dataset):
     # Data can be prepared for 1) Time > 0 sec or 2) Time > 5min.
     self.mode = mode
 
-    self.data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(in_data_file)
+    self.data, GroupCategories, PartitionCategories, ReqGRESCategories, \
+        ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(in_data_file)
     if ref_dataset is None:
       self.GroupCategories = list(GroupCategories)
       self.PartitionCategories = list(PartitionCategories)
@@ -95,14 +96,19 @@ class Dataset(Dataset):
     else:
       raise Exception('Not implemented.')
 
+    if "regression" in self.mode:
+      label = np.array([label], dtype=np.float32)
+    else:
+      label = np.array([label], dtype=int)
+
     if self.output_raw:
       return {'sample': np.array(sample, dtype=np.float32), 
-              'label': np.array([label], dtype=np.float32),
+              'label': label,
               'raw': raw,
             }
     else:
       return {'sample': np.array(sample, dtype=np.float32), 
-              'label': np.array([label], dtype=np.float32),
+              'label': label,
             }
 
 

@@ -11,12 +11,12 @@ import torch.nn as nn
 
 class Model(nn.Module):
 
-  def __init__(self, input_nc, ndf=500, n_layers=2, is_regression=True, gpu_ids=[]):
+  def __init__(self, input_nc, mode, ndf=500, n_layers=2, gpu_ids=[]):
     super(Model, self).__init__()
     self.gpu_ids = gpu_ids
 
     # Number of output layers is one for regression and 2 for classification.
-    output_nc = 1 if is_regression else 2
+    output_nc = 1 if "regression" in mode else 2
 
     # The architecture of the network
     sequence = \

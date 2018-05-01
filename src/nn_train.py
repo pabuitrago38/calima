@@ -45,7 +45,7 @@ testloader = DataLoader(testset, batch_size=args.batch_size, shuffle=True, drop_
 
 # Model.
 
-net = Model(input_nc=trainset.dims)
+net = Model(input_nc=trainset.dims, mode=args.mode)
 
 # Training.
 
@@ -101,7 +101,6 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
       labels = torch.log(labels + 1.)
     else:
       # Classification
-      outputs = torch.squeeze(outputs, dim=1)
       labels = torch.squeeze(labels, dim=1)
 
     loss = criterion(outputs, labels)
@@ -138,12 +137,12 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
     else:
       print 'epoch', epoch + 1
       trainarea, trainacc = ROC(trainloader, net, use_gpu=args.use_gpu)
-      print 'training, area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (trainacc, trainarea)
+      print 'training, area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (trainarea, trainacc)
       testarea, testacc = ROC(testloader, net, use_gpu=args.use_gpu)
-      print 'testing,  area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (testacc, testarea)
+      print 'testing,  area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (testarea, testacc)
       with open(eval_log_path, 'a') as f:
         f.write('%d  %.3f %.3f %.3f %.3f\n' % 
-            (epoch + 1, trainarea, trainacc, testarea, testacc))
+            (epoch + 1, trainacc, trainarea,testacc, testarea))
 
 
 
