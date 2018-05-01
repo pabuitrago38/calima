@@ -1,3 +1,18 @@
+To make various data plots.
+
+```
+# With all points.
+python dataDescriptors.py \
+  --mode classify_0sec \
+  --out_plot_dir /Users/paola/Google\ Drive/000-Development/Calima/Graphs/rawData1-plots-all
+
+# No zero points.
+python dataDescriptors.py \
+  --mode classify_5min \
+  --out_plot_dir /Users/paola/Google\ Drive/000-Development/Calima/Graphs/rawData1-plots-no-zero
+```
+
+
 To train classification Time > 0 sec.
 
 ```
@@ -23,14 +38,14 @@ python roc.py \
 ```
 
 
-To train classification Time > 5 min.
+To train classification Time > 5 min (points with Time == 0 are removed.)
 
 ```
 # Train.
 python nn_train.py \
   --checkpoint_dir /tmp/calima_checkpoints/classification_5min
 
-epoch=300
+epoch=160
 
 # Evaluate on training data.
 python roc.py \

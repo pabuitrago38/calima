@@ -34,10 +34,6 @@ args = parser.parse_args()
 
 logging.basicConfig(level=args.logging_level, format='%(levelname)s: %(message)s')
 
-
-# Network.
-
-
 # Data.
 
 trainset = Dataset(in_data_file=args.train_data_file)

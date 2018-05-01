@@ -4,7 +4,7 @@ import numpy as np
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 
-def plotHist(name_x, categories_x=None, bins=None, use_ylog_scale=False):
+def plotHist(name_x, categories_x=None, bins=None, use_ylog_scale=True):
   if categories_x is not None:
     # For categorical variable, indicdes of categories are taken.
     variable_x = np.array([categories_x.index(x) for x in data[name_x]])
@@ -23,7 +23,7 @@ def plotHist(name_x, categories_x=None, bins=None, use_ylog_scale=False):
   plt.savefig(op.join(args.out_plot_dir, '%s_histogram%s.png' % (name_x, log_suffix)))
   plt.clf()
 
-def plotScatter(name_x, name_y, categories_x=None, use_ylog_scale=False):
+def plotScatter(name_x, name_y, categories_x=None, use_ylog_scale=True):
   if categories_x is not None:
     variable_x = np.array([categories_x.index(x) for x in data[name_x]])
   else:
@@ -48,18 +48,18 @@ if __name__ == "__main__":
 
   parser = ArgumentParser()
   parser.add_argument('--in_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
-  parser.add_argument('--out_plot_dir', default='/Users/paola/Google Drive/000-Development/Calima/Graphs')
+  parser.add_argument('--out_plot_dir', default='/Users/paola/Google Drive/000-Development/Calima/Graphs/rawData1-plots-all')
+  parser.add_argument('--mode', choices=['classify_0sec', 'classify_5min'])
   args = parser.parse_args()
 
   # Collect raw data from the dataset.
-  dataset = Dataset(in_data_file=args.in_data_file, output_raw=True)
+  dataset = Dataset(in_data_file=args.in_data_file, output_raw=True, mode=args.mode)
   list_of_dicts = [x['raw'] for x in dataset]
   #list_of_dicts = [x for x in list_of_dicts if x['RealWait'] != 0]
   # Convert from a list of dicts to a dict of lists.
   data = dict(zip(list_of_dicts[0], zip(*[d.values() for d in list_of_dicts])))
 
-  use_ylog_scale = True
-  plotHist('RealWait', bins=100, use_ylog_scale=False)
+  plotHist('RealWait', bins=100)
   plotHist('EligibleWait')
   plotHist('ReqCPUS')
   plotHist('Group', dataset.GroupCategories)
