@@ -73,20 +73,21 @@ if __name__ == "__main__":
   parser.add_argument('--use_gpu', action='store_true')
   parser.add_argument('--logging_level', type=int, default=20, choices=[10,20,30,40],
       help='10 = debug (everything), 20 = info + warning and errors, 30 = warning + errors, 40 = error')
+  parser.add_argument('--mode', choices=['classify_0sec', 'classify_5min'])
   args = parser.parse_args()
 
   logging.basicConfig(level=args.logging_level, format='%(levelname)s: %(message)s')
 
   # Data.
   if args.ref_data_file is not None:
-    ref_dataset = Dataset(in_data_file=args.ref_data_file)
-    dataset = Dataset(in_data_file=args.in_data_file, ref_dataset=ref_dataset)
+    ref_dataset = Dataset(in_data_file=args.ref_data_file, mode=args.mode)
+    dataset = Dataset(in_data_file=args.in_data_file, ref_dataset=ref_dataset, mode=args.mode)
   else:
-    dataset = Dataset(in_data_file=args.in_data_file)
+    dataset = Dataset(in_data_file=args.in_data_file, mode=args.mode)
   loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, drop_last=False)
 
   # Model.
-  net = ClassificationModel(input_nc=dataset.dims)
+  net = Model(input_nc=dataset.dims)
   load_network(args.checkpoint_path, net)
 
   area, acc = ROC(loader, net,  use_gpu=args.use_gpu, plot_file=args.out_plot_path)

@@ -9,11 +9,14 @@ import torch.optim as optim
 import torch.nn as nn
 
 
-class ClassificationModel(nn.Module):
+class Model(nn.Module):
 
-  def __init__(self, input_nc, ndf=500, n_layers=2, gpu_ids=[]):
-    super(ClassificationModel, self).__init__()
+  def __init__(self, input_nc, ndf=500, n_layers=2, is_regression=False, gpu_ids=[]):
+    super(Model, self).__init__()
     self.gpu_ids = gpu_ids
+
+    # Number of output layers is one for regression and 2 for classification.
+    output_nc = 1 if is_regression else 2
 
     # The architecture of the network
     sequence = \
@@ -26,7 +29,7 @@ class ClassificationModel(nn.Module):
         nn.Sigmoid(),
     ] * n_layers + \
     [ 
-        nn.Linear(ndf, 2, bias=True),
+        nn.Linear(ndf, output_nc, bias=True),
     ]
     # Wrapping up the list of layers for pytorch magic.
     self.model = nn.Sequential(*sequence)
@@ -36,9 +39,9 @@ class ClassificationModel(nn.Module):
       classname = m.__class__.__name__
       if hasattr(m, 'weight'):
         if classname.find('Conv') != -1:
-          nn.init.xavier_normal(m.weight.data, gain=1)
+          nn.init.xavier_normal_(m.weight.data, gain=1)
         elif classname.find('Linear') != -1:
-          nn.init.xavier_normal(m.weight.data, gain=1)
+          nn.init.xavier_normal_(m.weight.data, gain=1)
     self.model.apply(weights_init_xavier)
 
   # Implementation of the forward pass algorithm.

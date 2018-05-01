@@ -14,8 +14,11 @@ from prepareData import prepare
 
 
 class Dataset(Dataset):
-  def __init__(self, in_data_file, ref_dataset=None, output_raw=False):
+  def __init__(self, mode, in_data_file, ref_dataset=None, output_raw=False):
     self.output_raw = output_raw
+
+    # Data can be prepared for 1) Time > 0 sec or 2) Time > 5min.
+    self.mode = mode
 
     self.data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(in_data_file)
     if ref_dataset is None:
@@ -46,8 +49,9 @@ class Dataset(Dataset):
           x['QOS'] in self.QOSCategories
       ]
 
-    # Uncomment this to remove all point with RealWait == 0
-    #self.data = [x for x in self.data if x['RealWait'].total_seconds() != 0]
+    # To remove all point with RealWait == 0
+    if self.mode == 'classify_5min':
+      self.data = [x for x in self.data if x['RealWait'].total_seconds() != 0]
 
   def to_onehot(self, label, categories):
     num_labels = len(categories)
@@ -78,14 +82,14 @@ class Dataset(Dataset):
     sample.append(raw['Timelimit'] / 336.)
     sample += self.to_onehot(raw['QOS'], self.QOSCategories)
 
-    # Uncomment this to train a regression model
-    #label = np.log(item['RealWait'] + 1)
-
-    # Uncomment this to train the classifier RealWait > 5 min.
-    #label = 1 if raw['RealWait'] > 60 * 5 else 0
-
-    # Uncomment this to train the classifier RealWait > 0.
-    label = 1 if raw['RealWait'] > 0 else 0
+    # To train the classifier RealWait > 5 min.
+    if self.mode == 'classify_5min':
+      label = 1 if raw['RealWait'] > 60 * 5 else 0
+    # To train the classifier RealWait > 0.
+    elif self.mode == 'classify_0sec':
+      label = 1 if raw['RealWait'] > 0 else 0
+    else:
+      raise Exception('Not implemented.')
 
     if self.output_raw:
       return {'sample': np.array(sample, dtype=np.float32), 

@@ -26,7 +26,6 @@ parser.add_argument('--epochs', default=1000, type=int,
     help='number of epochs to train.')
 parser.add_argument('--lr', default=0.00001, type=float,
     help='learning rate.')
-parser.add_argument('--mode', choices=['classify_0sec', 'classify_5min'])
 parser.add_argument('--use_gpu', action='store_true')
 parser.add_argument('--logging_level', type=int, default=20, choices=[10,20,30,40],
     help='10 = debug (everything), 20 = info + warning and errors, 30 = warning + errors, 40 = error')
@@ -48,11 +47,11 @@ testloader = DataLoader(testset, batch_size=args.batch_size, shuffle=False, drop
 
 # Model.
 
-net = Model(input_nc=trainset.dims)
+net = Model(input_nc=trainset.dims, is_regerssion=True)
 
 # Training.
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.L1Loss()
 optimizer = optim.Adam(net.parameters(), lr=args.lr)
 
 print('Started training.')
@@ -86,7 +85,7 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
 
     # forward + backward + optimize
     ## Calls forward function
-    outputs = net(features)
+    outputs = torch.log(net(features)) + 1.
     loss = criterion(outputs, labels)
     loss.backward()
     optimizer.step()
@@ -111,8 +110,9 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
     testarea, testacc = ROC(testloader, net, use_gpu=args.use_gpu)
     print 'testing,  area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (testarea, testacc)
     with open(eval_log_path, 'a') as f:
-      f.write('%d  %.3f %.3f %.3f %.3f\n' % 
-          (epoch + 1, trainarea, trainacc, testarea, testacc))
+      epoch_frac = epoch + ibatch / float(args.batch_size)
+      f.write('%0.2f  %.3f %.3f %.3f %.3f\n' % 
+          (epoch_frac, trainarea, trainacc, testarea, testacc))
 
     if args.checkpoint_dir is not None:
       # Create checkpoint_dir directory if does not exist (will run on the first time).
