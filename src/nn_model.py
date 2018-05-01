@@ -11,7 +11,7 @@ import torch.nn as nn
 
 class Model(nn.Module):
 
-  def __init__(self, input_nc, ndf=500, n_layers=2, is_regression=False, gpu_ids=[]):
+  def __init__(self, input_nc, ndf=500, n_layers=2, is_regression=True, gpu_ids=[]):
     super(Model, self).__init__()
     self.gpu_ids = gpu_ids
 

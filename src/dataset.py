@@ -51,7 +51,9 @@ class Dataset(Dataset):
 
     # To remove all point with RealWait == 0
     if self.mode == 'classify_5min':
-      self.data = [x for x in self.data if x['RealWait'].total_seconds() != 0]
+      self.data = [x for x in self.data if x['RealWait'].total_seconds() >= 0]
+    if self.mode == 'regression_5min':
+      self.data = [x for x in self.data if x['RealWait'].total_seconds() > 60.0*5]
 
   def to_onehot(self, label, categories):
     num_labels = len(categories)
@@ -88,17 +90,19 @@ class Dataset(Dataset):
     # To train the classifier RealWait > 0.
     elif self.mode == 'classify_0sec':
       label = 1 if raw['RealWait'] > 0 else 0
+    elif self.mode == 'regression_5min':
+      label = raw['RealWait']
     else:
       raise Exception('Not implemented.')
 
     if self.output_raw:
       return {'sample': np.array(sample, dtype=np.float32), 
-              'label': np.array([label], dtype=int),
+              'label': np.array([label], dtype=np.float32),
               'raw': raw,
             }
     else:
       return {'sample': np.array(sample, dtype=np.float32), 
-              'label': np.array([label], dtype=int),
+              'label': np.array([label], dtype=np.float32),
             }
 
 
