@@ -47,16 +47,14 @@ def plotScatter(name_x, name_y, categories_x=None, use_ylog_scale=False):
 if __name__ == "__main__":
 
   parser = ArgumentParser()
-  parser.add_argument('--in_data_file', default='../CalimaData/rawData1-P-filled.txt')
+  parser.add_argument('--in_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
   parser.add_argument('--out_plot_dir', default='/Users/paola/Google Drive/000-Development/Calima/Graphs')
   args = parser.parse_args()
 
   # Collect raw data from the dataset.
   dataset = Dataset(in_data_file=args.in_data_file, output_raw=True)
-  list_of_dicts = [x['item'] for x in dataset]
-  print len(list_of_dicts)
+  list_of_dicts = [x['raw'] for x in dataset]
   #list_of_dicts = [x for x in list_of_dicts if x['RealWait'] != 0]
-  print len(list_of_dicts)
   # Convert from a list of dicts to a dict of lists.
   data = dict(zip(list_of_dicts[0], zip(*[d.values() for d in list_of_dicts])))
 

@@ -14,17 +14,40 @@ from prepareData import prepare
 
 
 class Dataset(Dataset):
-  def __init__(self, in_data_file, output_raw=False):
+  def __init__(self, in_data_file, ref_dataset=None, output_raw=False):
     self.output_raw = output_raw
 
     self.data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(in_data_file)
-    self.GroupCategories = list(GroupCategories)
-    self.PartitionCategories = list(PartitionCategories)
-    self.ReqGRESCategories = list(ReqGRESCategories)
-    self.ReqMemTypeCategories = list(ReqMemTypeCategories)
-    self.ReqGPUCategories = list(ReqGPUCategories)
-    self.QOSCategories = list(QOSCategories)
-    self.dims = 170
+    if ref_dataset is None:
+      self.GroupCategories = list(GroupCategories)
+      self.PartitionCategories = list(PartitionCategories)
+      self.ReqGRESCategories = list(ReqGRESCategories)
+      self.ReqMemTypeCategories = list(ReqMemTypeCategories)
+      self.ReqGPUCategories = list(ReqGPUCategories)
+      self.QOSCategories = list(QOSCategories)
+      self.dims = 162
+    else:
+      # Copy categories from the reference dataset, 
+      # because the category groups may be different.
+      self.GroupCategories = ref_dataset.GroupCategories
+      self.PartitionCategories = ref_dataset.PartitionCategories
+      self.ReqGRESCategories = ref_dataset.ReqGRESCategories
+      self.ReqMemTypeCategories = ref_dataset.ReqMemTypeCategories
+      self.ReqGPUCategories = ref_dataset.ReqGPUCategories
+      self.QOSCategories = ref_dataset.QOSCategories
+      self.dims = 162
+      # Filter everything in groups which are not on ref_dataset.
+      self.data = [x for x in self.data if
+          x['Group'] in self.GroupCategories and
+          x['Partition'] in self.PartitionCategories and
+          x['ReqGRES'] in self.ReqGRESCategories and
+          x['ReqMemType'] in self.ReqMemTypeCategories and
+          x['ReqGPU'] in self.ReqGPUCategories and
+          x['QOS'] in self.QOSCategories
+      ]
+
+    # Uncomment this to remove all point with RealWait == 0
+    #self.data = [x for x in self.data if x['RealWait'].total_seconds() != 0]
 
   def to_onehot(self, label, categories):
     num_labels = len(categories)
@@ -38,32 +61,40 @@ class Dataset(Dataset):
   def __getitem__(self, index):
     item = self.data[index]
 
-    # Log on the output.
-    item['RealWait'] = item['RealWait'].total_seconds()
-    item['EligibleWait'] = item['EligibleWait'].total_seconds()
+    raw = item.copy() # Copy so that we do not change the member object.
+    raw['RealWait'] = raw['RealWait'].total_seconds()
+    raw['EligibleWait'] = raw['EligibleWait'].total_seconds()
 
     # Make a feature, including transform to onehot vector.
     sample = []
-    sample += self.to_onehot(item['Group'], self.GroupCategories)
-    sample += self.to_onehot(item['Partition'], self.PartitionCategories)
-    sample.append(item['ReqCPUS'] / 896.)
-    sample += self.to_onehot(item['ReqGRES'], self.ReqGRESCategories)
-    sample += self.to_onehot(item['ReqMemType'], self.ReqMemTypeCategories)
-    sample.append(item['ReqMem'] / 12288000.)
-    sample.append(item['ReqNodes'] / 32.)
-    sample += self.to_onehot(item['ReqGPU'], self.ReqGPUCategories)
-    sample.append(item['Timelimit'] / 336.)
-    sample += self.to_onehot(item['QOS'], self.QOSCategories)
-    label = np.log(item['RealWait'] + 1)
+    sample += self.to_onehot(raw['Group'], self.GroupCategories)
+    sample += self.to_onehot(raw['Partition'], self.PartitionCategories)
+    sample.append(raw['ReqCPUS'] / 896.)
+    sample += self.to_onehot(raw['ReqGRES'], self.ReqGRESCategories)
+    sample += self.to_onehot(raw['ReqMemType'], self.ReqMemTypeCategories)
+    sample.append(raw['ReqMem'] / 12288000.)
+    sample.append(raw['ReqNodes'] / 32.)
+    sample += self.to_onehot(raw['ReqGPU'], self.ReqGPUCategories)
+    sample.append(raw['Timelimit'] / 336.)
+    sample += self.to_onehot(raw['QOS'], self.QOSCategories)
+
+    # Uncomment this to train a regression model
+    #label = np.log(item['RealWait'] + 1)
+
+    # Uncomment this to train the classifier RealWait > 5 min.
+    #label = 1 if raw['RealWait'] > 60 * 5 else 0
+
+    # Uncomment this to train the classifier RealWait > 0.
+    label = 1 if raw['RealWait'] > 0 else 0
 
     if self.output_raw:
       return {'sample': np.array(sample, dtype=np.float32), 
-              'label': np.array([label], dtype=np.float32),
-              'item': item,
+              'label': np.array([label], dtype=int),
+              'raw': raw,
             }
     else:
       return {'sample': np.array(sample, dtype=np.float32), 
-              'label': np.array([label], dtype=np.float32),
+              'label': np.array([label], dtype=int),
             }
 
 
@@ -72,7 +103,7 @@ class Dataset(Dataset):
 if __name__ == "__main__":
 
   parser = ArgumentParser()
-  parser.add_argument('--in_data_file', default='../CalimaData/rawData1-P-filled.txt')
+  parser.add_argument('--in_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
   args = parser.parse_args()
 
   dataset = Dataset(args.in_data_file)

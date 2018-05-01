@@ -1,8 +1,17 @@
+import os.path as op
 from argparse import ArgumentParser
 from datetime import datetime
 import numpy as np
 
 def prepare(in_data_file):
+
+  # Pick the number
+  if op.basename(in_data_file) == 'rawData1-P-filled.txt':
+    filter_start_date = '2018-04-12T00:00:00'
+  elif op.basename(in_data_file) == 'rawData2-P-filled.txt':
+    filter_start_date = '2018-04-28T00:00:00'
+  else:
+    raise Exception('Only two file names are known.')
 
   with open(in_data_file) as f:
     lines = f.read().splitlines()
@@ -58,8 +67,8 @@ def prepare(in_data_file):
     RealWait = Start - Submit
     EligibleWait = Start - Eligible
 
-    if Submit < datetime.strptime('2018-04-12T00:00:00', '%Y-%m-%dT%X'):
-      continue  # Dates before April.
+    if Submit < datetime.strptime(filter_start_date, '%Y-%m-%dT%X'):
+      continue  # Filter all dates before April.
 
     GroupCategories.add(Group)
     PartitionCategories.add(Partition)
@@ -136,19 +145,6 @@ if __name__ == "__main__":
 
     for item in data:
       
-      # sample += self.to_onehot(item['Group'], self.GroupCategories)
-      # sample += self.to_onehot(item['Partition'], self.PartitionCategories)
-      # sample.append(item['ReqCPUS'] / 896.)
-      # sample += self.to_onehot(item['ReqGRES'], self.ReqGRESCategories)
-      # sample += self.to_onehot(item['ReqMemType'], self.ReqMemTypeCategories)
-      # sample.append(item['ReqMem'] / 12288000.)
-      # sample.append(item['ReqNodes'] / 32.)
-      # sample += self.to_onehot(item['ReqGPU'], self.ReqGPUCategories)
-      # sample.append(item['Timelimit'] / 336.)
-      # sample += self.to_onehot(item['QOS'], self.QOSCategories)
-      # label = np.log(item['RealWait'].total_seconds() + 1)
-      # features = ['Group', 'Partition','ReqCPUS', 'ReqGRES','ReqMemType','ReqMem','ReqNodes','ReqGPU','Timelimit','QOS','RealWait','EligibleWait']
-
       f.write('%s%s' % (item['Group'], SEP))
       f.write('%s%s' % (item['Partition'], SEP))
       f.write('%s%s' % (item['ReqCPUS'] / 896., SEP))
