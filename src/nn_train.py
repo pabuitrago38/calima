@@ -20,14 +20,14 @@ SAVE_FREQ_EPOCHS = 5
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
 parser.add_argument('--test_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData2-P-filled.txt')
-parser.add_argument('--checkpoint_dir', default='/tmp/calima_checkpoints/regression2',
+parser.add_argument('--checkpoint_dir', default='/tmp/calima_checkpoints/tmp',
     help='where to save the model. If None, will not save.')
 parser.add_argument('--batch_size', default=256, type=int)
 parser.add_argument('--epochs', default=5000, type=int,
     help='number of epochs to train.')
 parser.add_argument('--lr', default=0.00001, type=float,
     help='learning rate.')
-parser.add_argument('--mode', default='regression_5min',choices=['classify_0sec', 'classify_5min', 'regression_5min'])
+parser.add_argument('--mode', choices=['classify_0sec', 'classify_5min', 'regression_5min'])
 parser.add_argument('--use_gpu', action='store_true')
 parser.add_argument('--logging_level', type=int, default=20, choices=[10,20,30,40],
     help='10 = debug (everything), 20 = info + warning and errors, 30 = warning + errors, 40 = error')
@@ -56,7 +56,9 @@ else:
 
 optimizer = optim.Adam(net.parameters(), lr=args.lr)
 
-print('Started training.')
+# Create checkpoint_dir if it does not exist.
+if not op.exists(args.checkpoint_dir):
+  os.makedirs(args.checkpoint_dir)
 loss_log_path = op.join(args.checkpoint_dir, 'loss.log')
 with open(loss_log_path, 'w') as f:
   f.write('epoch iter train_loss\n')
@@ -67,6 +69,7 @@ with open(eval_log_path, 'w') as f:
   else:
     f.write('epoch train_acc train_auroc test_acc, test_auroc\n')
 
+print('Started training.')
 start = time()
 totalIter = 0;
 
