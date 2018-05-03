@@ -47,8 +47,8 @@ def plotScatter(name_x, name_y, categories_x=None, use_ylog_scale=True):
 if __name__ == "__main__":
 
   parser = ArgumentParser()
-  parser.add_argument('--in_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
-  parser.add_argument('--out_plot_dir', default='/Users/paola/Google Drive/000-Development/Calima/Graphs/rawData1-plots-all')
+  parser.add_argument('--in_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData2-P-filled.txt')
+  parser.add_argument('--out_plot_dir', default='/Users/paola/Google Drive/000-Development/Calima/Graphs/rawData2-plots-all')
   parser.add_argument('--mode', choices=['classify_0sec', 'classify_5min'])
   args = parser.parse_args()
 
@@ -62,11 +62,11 @@ if __name__ == "__main__":
   plotHist('RealWait', bins=100)
   plotHist('EligibleWait')
   plotHist('ReqCPUS')
+  plotHist('ReqGPUS')
   plotHist('Group', dataset.GroupCategories)
   plotHist('Partition', dataset.PartitionCategories)
-  plotHist('ReqGRES', dataset.ReqGRESCategories)
+  plotHist('ReqGPUType', dataset.ReqGPUTypeCategories)
   plotHist('ReqMemType', dataset.ReqMemTypeCategories)
-  plotHist('ReqGPU', dataset.ReqGPUCategories)
   plotHist('QOS', dataset.QOSCategories)
   plotScatter('ReqCPUS', 'RealWait')
   plotScatter('ReqMem', 'RealWait')

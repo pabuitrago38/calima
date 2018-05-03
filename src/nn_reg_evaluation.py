@@ -13,25 +13,28 @@ from dataset import Dataset
 from nn_model import *
 
 
-def nn_reg_evaluation(loader, net, use_gpu=False, plot_file=None, loss='l1-norm'):
+def nn_reg_evaluation(loader, net, use_gpu=False, plot_file=None, label_space='Log'):
   
-  if loss == 'l1':
-    criterion = nn.L1Loss()
-  elif loss == 'l2':
-    criterion = nn.L2Loss()
-  elif loss == 'l1-norm':
-    class L1NormaLoss(nn.Module):
-      def __call__(self, input, target):
-       abs_dif = torch.abs(input-target)
-       abs_norm = abs_dif/torch.abs(target)
-       sum_abs = torch.sum(abs_norm)
-       return sum_abs
+  class L1NormaLoss(nn.Module):
+    def __call__(self, input, target):
+     abs_dif = torch.abs(input-target)
+     abs_norm = abs_dif/torch.abs(target)
+     sum_abs = torch.sum(abs_norm)
+     return sum_abs
 
-    criterion = L1NormaLoss()
+  criterion_nl1 = L1NormaLoss()
+  #if loss == 'l1':
+  #criterion_l1 = nn.L1Loss()
+  #elif loss == 'l2':
+  #criterion_l2 = nn.L2Loss()
+  #elif loss == 'l1-norm':
+  
     
 
   # Dataset loss
-  ds_loss = 0.
+  ds_loss_nl1 = 0.
+  #ds_loss_l1 = 0.
+  #ds_loss_l2 = 0.
   ds_size = len(loader.dataset)
   
   for batch in loader:
@@ -45,11 +48,23 @@ def nn_reg_evaluation(loader, net, use_gpu=False, plot_file=None, loss='l1-norm'
     else:
       features, labels = Variable(features), Variable(labels)
    
-    outputs = net(features)
-    #outputs = torch.log(net(features) + 1.)
-    labels = torch.log(labels + 1.)
-    
-    ds_loss = ds_loss + criterion(outputs, labels)
+    # Evaluating in the log space
+    ##outputs = net(features)
+    ##labels = torch.log(labels + 1.)
 
-  return ds_loss/ds_size
+    outputs = net(features)
+
+    if label_space == "Log":
+      # Evaluating in the real space
+      outputs = torch.exp(outputs)-1
+    
+    ds_loss_nl1 = ds_loss_nl1 + criterion_nl1(outputs, labels)
+    #ds_loss_l1 = ds_loss_l1 + criterion_l1(outputs, labels)
+    #ds_loss_l2 = ds_loss_l2 + criterion_l2(outputs, labels)
+
+    nl1_loss = ds_loss_nl1/ds_size
+    #l1_loss = ds_loss_l1/ds_size
+    #l2_loss = ds_loss_l2/ds_size
+
+  return nl1_loss#, l1_loss, l2_loss
 

@@ -15,22 +15,31 @@ from roc import ROC
 from nn_reg_evaluation import nn_reg_evaluation
 
 PRINT_FREQ_SEC = 2
-SAVE_FREQ_EPOCHS = 5
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
 parser.add_argument('--test_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData2-P-filled.txt')
 parser.add_argument('--checkpoint_dir', default='/tmp/calima_checkpoints/regression2',
     help='where to save the model. If None, will not save.')
+parser.add_argument('--save_freq_epochs', default=5, type=int)
 parser.add_argument('--batch_size', default=256, type=int)
+parser.add_argument('--n_layers', default=2, type=int)
+parser.add_argument('--n_hidden_units', default=500, type=int)
 parser.add_argument('--epochs', default=5000, type=int,
     help='number of epochs to train.')
 parser.add_argument('--lr', default=0.00001, type=float,
     help='learning rate.')
+parser.add_argument('--weight_decay', default=0.0, type=float,
+    help='weight decay.')
 parser.add_argument('--mode', default='regression_5min',choices=['classify_0sec', 'classify_5min', 'regression_5min'])
+parser.add_argument('--train_loss', default='L1',choices=['L1', 'L2'])
+parser.add_argument('--optimizer', default='Adam',choices=['Adam', 'SGD'])
+parser.add_argument('--label_space', default='Log',choices=['Log', 'Real'])
 parser.add_argument('--use_gpu', action='store_true')
 parser.add_argument('--logging_level', type=int, default=20, choices=[10,20,30,40],
     help='10 = debug (everything), 20 = info + warning and errors, 30 = warning + errors, 40 = error')
+
 args = parser.parse_args()
 
 logging.basicConfig(level=args.logging_level, format='%(levelname)s: %(message)s')
@@ -45,16 +54,24 @@ testloader = DataLoader(testset, batch_size=args.batch_size, shuffle=True, drop_
 
 # Model.
 
-net = Model(input_nc=trainset.dims, mode=args.mode)
+net = Model(input_nc=trainset.dims, mode=args.mode, ndf=args.n_hidden_units, n_layers=args.n_layers)
 
 # Training.
 
 if args.mode == 'regression_5min':
-  criterion = nn.L1Loss()
+  if args.train_loss == 'L1':
+    criterion = nn.L1Loss()
+    
+  #elif args.train_loss == 'L2':
+  #  criterion = nn.L2Loss()
 else:
   criterion = nn.CrossEntropyLoss()
 
-optimizer = optim.Adam(net.parameters(), lr=args.lr)
+if args.optimizer == 'Adam':
+  optimizer = optim.Adam(net.parameters(), lr=args.lr)#, weight_decay=args.weight_decay)
+  
+elif args.optimizer == 'SGD':
+  optimizer = optim.SGD(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 print('Started training.')
 loss_log_path = op.join(args.checkpoint_dir, 'loss.log')
@@ -63,7 +80,7 @@ with open(loss_log_path, 'w') as f:
 eval_log_path = op.join(args.checkpoint_dir, 'eval.log')
 with open(eval_log_path, 'w') as f:
   if args.mode == 'regression_5min':
-    f.write('epoch train_loss test_loss\n')
+    f.write('epoch train_loss_l1norm test_loss_l1norm \n')
   else:
     f.write('epoch train_acc train_auroc test_acc, test_auroc\n')
 
@@ -97,8 +114,10 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
     if args.mode == 'regression_5min':
       # Regression
 
-      #outputs = torch.log(outputs + 1.)
-      labels = torch.log(labels + 1.)
+      if args.label_space == 'Log':
+        #outputs = torch.log(outputs + 1.)
+        labels = torch.log(labels + 1.)
+
     else:
       # Classification
       labels = torch.squeeze(labels, dim=1)
@@ -110,7 +129,7 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
     totalIter = totalIter + 1
     # Print statistics roughly every PRINT_FREQ samples
     if time() - start > PRINT_FREQ_SEC:
-      print('[%d, %5d] loss: %f' % (epoch + 1, ibatch + 1, loss.data))
+      #print('[%d, %5d] loss: %f' % (epoch + 1, ibatch + 1, loss.data))
       start = time()
 
       # Write logs.
@@ -120,12 +139,13 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
 
     # The epoch ends here.
 
-  if (epoch + 1) % SAVE_FREQ_EPOCHS == 0:
+  if (epoch + 1) % args.save_freq_epochs == 0:
 
     if args.mode == 'regression_5min':
+      print 'epoch', epoch + 1
       #Regression evaluation
-      training_loss = nn_reg_evaluation(trainloader, net, use_gpu=args.use_gpu)
-      testing_loss = nn_reg_evaluation(testloader, net, use_gpu=args.use_gpu)
+      training_loss1_norm = nn_reg_evaluation(trainloader, net, use_gpu=args.use_gpu, label_space=args.label_space )
+      testing_loss1_norm = nn_reg_evaluation(testloader, net, use_gpu=args.use_gpu, label_space=args.label_space)
 
       #print 'epoch', epoch + 1
       #print 'training_loss: %.3f' % training_loss
@@ -133,19 +153,16 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
 
       with open(eval_log_path, 'a') as f:
         f.write('%d  %.3f %.3f\n' %
-          (epoch + 1, training_loss, testing_loss))
+          (epoch + 1, training_loss1_norm, testing_loss1_norm))
     else:
       print 'epoch', epoch + 1
       trainarea, trainacc = ROC(trainloader, net, use_gpu=args.use_gpu)
-      print 'training, area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (trainarea, trainacc)
+      #print 'training, area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (trainarea, trainacc)
       testarea, testacc = ROC(testloader, net, use_gpu=args.use_gpu)
-      print 'testing,  area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (testarea, testacc)
+      #print 'testing,  area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (testarea, testacc)
       with open(eval_log_path, 'a') as f:
         f.write('%d  %.3f %.3f %.3f %.3f\n' % 
             (epoch + 1, trainacc, trainarea,testacc, testarea))
-
-
-
 
     if args.checkpoint_dir is not None:
       # Create checkpoint_dir directory if does not exist (will run on the first time).

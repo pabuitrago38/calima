@@ -1,0 +1,20 @@
+
+TASK=classify_0sec
+EPOCHS=100
+SAVE_FREQ_EPOCHS=1
+LR=0.001
+NLAYERS=2
+HU=500
+BATCHSIZE=16
+
+#For reference
+TRAINING_LOSS=Cross_entrophy
+OPTIMIZER=Adam
+REGULARIZER=None
+SOLUTION_DOMAIN=Real 
+
+DIR=${TASK}-LR${LR}-NLAYERS${NLAYERS}-HU${HU}-BATCHSIZE${BATCHSIZE}
+CHECKPOINT_DIR=/tmp/calima_checkpoints/experiments/${DIR}
+mkdir ${CHECKPOINT_DIR}
+
+python nn_train.py --epochs ${EPOCHS} --checkpoint_dir ${CHECKPOINT_DIR} --mode ${TASK} --lr ${LR} --n_layers ${NLAYERS} --n_hidden_units ${HU} --batch_size ${BATCHSIZE} --save_freq_epochs ${SAVE_FREQ_EPOCHS} >> ${CHECKPOINT_DIR}/execution.log

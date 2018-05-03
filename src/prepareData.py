@@ -21,10 +21,10 @@ def prepare(in_data_file):
 
   GroupCategories = set()
   PartitionCategories = set()
-  ReqGRESCategories = set()
+  ReqGPUTypeCategories = set()
   ReqMemTypeCategories = set()
-  ReqGPUCategories = set()
   QOSCategories = set()
+  ReqGPUTypeCategories = set()
 
   data = []
   for line in lines:
@@ -42,8 +42,14 @@ def prepare(in_data_file):
     ReqMem = int(ReqMem[:-2])
     ReqNodes = int(words[6])
     ReqGPU = words[7].split('/')[-1]
+    ReqGPUType = 'NA'
+    ReqGPUS = 0
     if ReqGPU[:3] != 'gpu':
       ReqGPU = '0'
+    else:
+      ReqGPU = ReqGPU.split(':')[1]
+      ReqGPUType = ReqGPU.split('=')[0]
+      ReqGPUS = int(ReqGPU.split('=')[1])
     assert len(words[8]) > 0
     Timelimit = words[8].split(':')[0]
     if '-' in Timelimit:
@@ -72,9 +78,8 @@ def prepare(in_data_file):
 
     GroupCategories.add(Group)
     PartitionCategories.add(Partition)
-    ReqGRESCategories.add(ReqGRES)
     ReqMemTypeCategories.add(ReqMemType)
-    ReqGPUCategories.add(ReqGPU)
+    ReqGPUTypeCategories.add(ReqGPUType)
     QOSCategories.add(QOS)
 
     data.append({
@@ -82,11 +87,11 @@ def prepare(in_data_file):
       'Group': Group,
       'Partition': Partition,
       'ReqCPUS': ReqCPUS,
-      'ReqGRES': ReqGRES,
+      'ReqGPUS': ReqGPUS,
+      'ReqGPUType': ReqGPUType,
       'ReqMemType': ReqMemType,
       'ReqMem': ReqMem,
       'ReqNodes': ReqNodes,
-      'ReqGPU': ReqGPU,
       'Timelimit': Timelimit,
       'QOS': QOS,
       'Submit': Submit,
@@ -96,7 +101,7 @@ def prepare(in_data_file):
       'EligibleWait': EligibleWait,
     })
 
-  return data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories
+  return data, GroupCategories, PartitionCategories, ReqGPUTypeCategories, ReqMemTypeCategories, QOSCategories
 
 
 
@@ -107,13 +112,12 @@ if __name__ == "__main__":
   parser.add_argument('--out_data_file', default='../CalimaData/rawData1-P-filled-human-readable.txt')
   args = parser.parse_args()
 
-  data, GroupCategories, PartitionCategories, ReqGRESCategories, ReqMemTypeCategories, ReqGPUCategories, QOSCategories = prepare(args.in_data_file)
+  data, GroupCategories, PartitionCategories, ReqGPUTypeCategories, ReqMemTypeCategories,  QOSCategories = prepare(args.in_data_file)
 
   print 'GroupCategories', len(GroupCategories), GroupCategories
   print 'PartitionCategories', len(PartitionCategories), PartitionCategories
-  print 'ReqGRESCategories', len(ReqGRESCategories), ReqGRESCategories
+  print 'ReqGPUTypeCategories', len(ReqGPUTypeCategories), ReqGPUTypeCategories
   print 'ReqMemTypeCategories', len(ReqMemTypeCategories), ReqMemTypeCategories
-  print 'ReqGPUCategories', len(ReqGPUCategories), ReqGPUCategories
   print 'QOSCategories', len(QOSCategories), QOSCategories
 
   print 'total', len(data)
@@ -122,6 +126,7 @@ if __name__ == "__main__":
     print '"%s" range' % name, min([x[name] for x in data]), '-', max([x[name] for x in data])
   printRange('Start')
   printRange('ReqCPUS')
+  printRange('ReqGPUS')
   printRange('ReqMem')
   printRange('ReqNodes')
   printRange('Timelimit')
@@ -135,7 +140,7 @@ if __name__ == "__main__":
   with open(args.out_data_file, 'w') as f:
 
     # Print the names of features to file.
-    features = ['Group', 'Partition','ReqCPUS', 'ReqGRES','ReqMemType','ReqMem','ReqNodes','ReqGPU','Timelimit','QOS','RealWait','EligibleWait']
+    features = ['Group', 'Partition','ReqCPUS', 'ReqGPUS', 'ReqGPUType','ReqMemType','ReqMem','ReqNodes','Timelimit','QOS','RealWait','EligibleWait']
 
     for feat in features:
       f.write('%s%s' % (feat, SEP))
@@ -148,11 +153,11 @@ if __name__ == "__main__":
       f.write('%s%s' % (item['Group'], SEP))
       f.write('%s%s' % (item['Partition'], SEP))
       f.write('%s%s' % (item['ReqCPUS'] / 896., SEP))
-      f.write('%s%s' % (item['ReqGRES'], SEP))
+      f.write('%s%s' % (item['ReqGPUS'] / 8., SEP))
+      f.write('%s%s' % (item['ReqGPUType'], SEP))
       f.write('%s%s' % (item['ReqMemType'], SEP))
       f.write('%s%s' % (item['ReqMem'] / 12288000., SEP))
       f.write('%s%s' % (item['ReqNodes'] / 32., SEP))
-      f.write('%s%s' % (item['ReqGPU'], SEP))
       f.write('%s%s' % (item['Timelimit'] / 336., SEP))
       f.write('%s%s' % (item['QOS'], SEP))
       f.write('%s%s' % (np.log(item['RealWait'].total_seconds() + 1), SEP))
