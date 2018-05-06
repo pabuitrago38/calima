@@ -15,6 +15,7 @@ from prepareDataPT import prepare
 
 class Dataset(Dataset):
   def __init__(self, mode, in_data_file, ref_dataset=None, output_raw=False):
+    print 'Loading dataset PT.'
     self.output_raw = output_raw
 
     # Data can be prepared for 1) Time > 0 sec or 2) Time > 5min.
