@@ -18,8 +18,8 @@ PRINT_FREQ_SEC = 2
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--train_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
-parser.add_argument('--test_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData2-P-filled.txt')
+parser.add_argument('--train_data_file', default='/Users/paola/Google Drive/BD&AI Group/Projects/000-Development/Calima/Data/rawData1-P-filled.txt')
+parser.add_argument('--test_data_file', default='/Users/paola/Google Drive/BD&AI Group/Projects/000-Development/Calima/Data/rawData2-P-filled.txt')
 parser.add_argument('--checkpoint_dir', default='/tmp/calima_checkpoints/regression2',
     help='where to save the model. If None, will not save.')
 parser.add_argument('--save_freq_epochs', default=5, type=int)
@@ -35,7 +35,8 @@ parser.add_argument('--weight_decay', default=0.0, type=float,
 parser.add_argument('--mode', default='regression_5min',choices=['classify_0sec', 'classify_5min', 'regression_5min'])
 parser.add_argument('--train_loss', default='L1',choices=['L1', 'L2'])
 parser.add_argument('--optimizer', default='Adam',choices=['Adam', 'SGD'])
-parser.add_argument('--label_space', default='Log',choices=['Log', 'Real'])
+parser.add_argument('--train_space', default='Log',choices=['Log', 'Real'])
+parser.add_argument('--eval_space', default='Log',choices=['Log', 'Real'])
 parser.add_argument('--use_gpu', action='store_true')
 parser.add_argument('--logging_level', type=int, default=20, choices=[10,20,30,40],
     help='10 = debug (everything), 20 = info + warning and errors, 30 = warning + errors, 40 = error')
@@ -114,7 +115,7 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
     if args.mode == 'regression_5min':
       # Regression
 
-      if args.label_space == 'Log':
+      if args.train_space == 'Log':
         #outputs = torch.log(outputs + 1.)
         labels = torch.log(labels + 1.)
 
@@ -144,8 +145,8 @@ for epoch in range(args.epochs):  # loop over the dataset multiple times
     if args.mode == 'regression_5min':
       print 'epoch', epoch + 1
       #Regression evaluation
-      training_loss1_norm = nn_reg_evaluation(trainloader, net, use_gpu=args.use_gpu, label_space=args.label_space )
-      testing_loss1_norm = nn_reg_evaluation(testloader, net, use_gpu=args.use_gpu, label_space=args.label_space)
+      training_loss1_norm = nn_reg_evaluation(trainloader, net, use_gpu=args.use_gpu, train_space=args.train_space, eval_space=args.eval_space )
+      testing_loss1_norm = nn_reg_evaluation(testloader, net, use_gpu=args.use_gpu, train_space=args.train_space, eval_space=args.eval_space)
 
       #print 'epoch', epoch + 1
       #print 'training_loss: %.3f' % training_loss

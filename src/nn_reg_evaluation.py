@@ -13,7 +13,7 @@ from dataset import Dataset
 from nn_model import *
 
 
-def nn_reg_evaluation(loader, net, use_gpu=False, plot_file=None, label_space='Log'):
+def nn_reg_evaluation(loader, net, use_gpu=False, plot_file=None, train_space='Log', eval_space='Log'):
   
   class L1NormaLoss(nn.Module):
     def __call__(self, input, target):
@@ -54,9 +54,17 @@ def nn_reg_evaluation(loader, net, use_gpu=False, plot_file=None, label_space='L
 
     outputs = net(features)
 
-    if label_space == "Log":
+    if train_space == 'Log' and eval_space == "Log":
+      labels = torch.log(labels + 1.)
+    elif train_space == 'Real' and eval_space == "Real":
+      pass
+    elif train_space == 'Log' and eval_space == "Real":
       # Evaluating in the real space
       outputs = torch.exp(outputs)-1
+    elif train_space == 'Real' and eval_space == "Log":
+      # Evaluation in the log space
+      outputs = torch.log(outputs + 1.)
+      labels = torch.log(labels + 1.)
     
     ds_loss_nl1 = ds_loss_nl1 + criterion_nl1(outputs, labels)
     #ds_loss_l1 = ds_loss_l1 + criterion_l1(outputs, labels)

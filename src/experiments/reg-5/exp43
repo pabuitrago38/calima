@@ -11,10 +11,11 @@ BATCHSIZE=256
 TRAINING_LOSS=L1
 OPTIMIZER=Adam
 REGULARIZER=0
-SOLUTION_DOMAIN=Log 
+TRAIN_SPACE=Log 
+EVAL_SPACE=Log 
 
 DIR=${TASK}-LR${LR}-NLAYERS${NLAYERS}-HU${HU}-BATCHSIZE${BATCHSIZE}-LOSS${TRAINING_LOSS}-OPTIMIZER${OPTIMIZER}-REG${REGULARIZER}-DOMAIN${SOLUTION_DOMAIN}-MAXNEPOCHS${EPOCHS}
 CHECKPOINT_DIR=/tmp/calima_checkpoints/experiments/regression/${DIR}
-mkdir ${CHECKPOINT_DIR}
+mkdir -p ${CHECKPOINT_DIR}
 
-python nn_train.py --epochs ${EPOCHS} --checkpoint_dir ${CHECKPOINT_DIR} --mode ${TASK} --lr ${LR} --n_layers ${NLAYERS} --n_hidden_units ${HU} --batch_size ${BATCHSIZE} --save_freq_epochs ${SAVE_FREQ_EPOCHS} --train_loss ${TRAINING_LOSS} --optimizer ${OPTIMIZER} --weight_decay ${REGULARIZER} --label_space ${SOLUTION_DOMAIN} # > ${CHECKPOINT_DIR}/execution.log
+python nn_train.py --epochs ${EPOCHS} --checkpoint_dir ${CHECKPOINT_DIR} --mode ${TASK} --lr ${LR} --n_layers ${NLAYERS} --n_hidden_units ${HU} --batch_size ${BATCHSIZE} --save_freq_epochs ${SAVE_FREQ_EPOCHS} --train_loss ${TRAINING_LOSS} --optimizer ${OPTIMIZER} --weight_decay ${REGULARIZER} --train_space ${TRAIN_SPACE} --eval_space ${EVAL_SPACE} # > ${CHECKPOINT_DIR}/execution.log
