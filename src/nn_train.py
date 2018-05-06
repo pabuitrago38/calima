@@ -18,8 +18,8 @@ PRINT_FREQ_SEC = 2
 SAVE_FREQ_EPOCHS = 5
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--train_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')
-parser.add_argument('--test_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData2-P-filled.txt')
+parser.add_argument('--train_data_file', default='/Users/paola/Google Drive/BD&AI Group/Projects/000-Development/Calima/Data/rawData1-P-filled.txt')
+parser.add_argument('--test_data_file', default='/Users/paola/Google Drive/BD&AI Group/Projects/000-Development/Calima/Data/rawData2-P-filled.txt')
 parser.add_argument('--checkpoint_dir', default='/tmp/calima_checkpoints/tmp',
     help='where to save the model. If None, will not save.')
 parser.add_argument('--batch_size', default=256, type=int)
