@@ -9,9 +9,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
-from dataset import Dataset
-from nn_model import *
-
 
 def ROC(loader, net, use_gpu=False, plot_file=None):
   Y_gt = np.empty((0,))
@@ -63,6 +60,9 @@ def ROC(loader, net, use_gpu=False, plot_file=None):
 
 
 if __name__ == "__main__":
+
+  from dataset import Dataset
+  from nn_model import *
 
   parser = argparse.ArgumentParser()
   parser.add_argument('--in_data_file', default='/Users/paola/Google Drive/000-Development/Calima/Data/rawData1-P-filled.txt')

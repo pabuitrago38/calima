@@ -9,7 +9,6 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from dataset import Dataset
 from nn_model import *
 from roc import ROC
 from nn_reg_evaluation import nn_reg_evaluation
@@ -34,6 +33,7 @@ parser.add_argument('--weight_decay', default=0.0, type=float,
     help='weight decay.')
 parser.add_argument('--mode', default='regression_5min',choices=['classify_0sec', 'classify_5min', 'regression_5min'])
 parser.add_argument('--train_loss', default='L1',choices=['L1', 'L2'])
+parser.add_argument('--dataset_type', default='PT',choices=['PT', 'KK'])
 parser.add_argument('--optimizer', default='Adam',choices=['Adam', 'SGD'])
 parser.add_argument('--train_space', default='Log',choices=['Log', 'Real'])
 parser.add_argument('--eval_space', default='Log',choices=['Log', 'Real'])
@@ -46,6 +46,12 @@ args = parser.parse_args()
 logging.basicConfig(level=args.logging_level, format='%(levelname)s: %(message)s')
 
 # Data.
+if args.dataset_type == 'PT':
+  from datasetPT import Dataset
+elif args.dataset_type == 'KK':
+  from datasetKK import Dataset
+else:
+  assert 0
 
 trainset = Dataset(mode=args.mode, in_data_file=args.train_data_file)
 trainloader = DataLoader(trainset, batch_size=args.batch_size, shuffle=True, drop_last=False)
@@ -74,7 +80,8 @@ if args.optimizer == 'Adam':
 elif args.optimizer == 'SGD':
   optimizer = optim.SGD(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-print('Started training.')
+if args.checkpoint_dir is not None and not op.exists(args.checkpoint_dir):
+  os.makedirs(args.checkpoint_dir)
 loss_log_path = op.join(args.checkpoint_dir, 'loss.log')
 with open(loss_log_path, 'w') as f:
   f.write('epoch iter train_loss\n')
@@ -85,6 +92,7 @@ with open(eval_log_path, 'w') as f:
   else:
     f.write('epoch train_acc train_auroc test_acc, test_auroc\n')
 
+print('Started training.')
 start = time()
 totalIter = 0;
 

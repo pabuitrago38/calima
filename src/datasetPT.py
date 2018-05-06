@@ -10,7 +10,7 @@ from time import time
 import torch
 from torch.utils.data import Dataset
 
-from prepareData import prepare
+from prepareDataPT import prepare
 
 
 class Dataset(Dataset):

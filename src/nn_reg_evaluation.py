@@ -9,7 +9,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
-from dataset import Dataset
 from nn_model import *
 
 
