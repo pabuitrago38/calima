@@ -47,14 +47,13 @@ def train(args):
   if args.mode == 'regression_5min':
     if args.train_loss == 'L1':
       criterion = nn.L1Loss()
-      
-    #elif args.train_loss == 'L2':
-    #  criterion = nn.L2Loss()
+    elif args.train_loss == 'L2':
+      criterion = nn.L2Loss()
   else:
     criterion = nn.CrossEntropyLoss()
 
   if args.optimizer == 'Adam':
-    optimizer = optim.Adam(net.parameters(), lr=args.lr)#, weight_decay=args.weight_decay)
+    optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     
   elif args.optimizer == 'SGD':
     optimizer = optim.SGD(net.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -72,6 +71,17 @@ def train(args):
   print('Started training.')
   start = time()
   totalIter = 0;
+
+  bestEpoch=-1
+  if args.mode == 'regression_5min':
+    min_test_loss = 999999;
+    best_training_loss = -1;
+  else:
+    max_testTrain_AUC=0;
+    bestTrainarea = -1
+    bestTrainacc = -1
+    bestTestacc = -1
+
 
   for epoch in range(args.epochs):  # loop over the dataset multiple times
 
@@ -136,6 +146,11 @@ def train(args):
         #print 'epoch', epoch + 1
         #print 'training_loss: %.3f' % training_loss
         #print 'testing_loss: %.3f' % testing_loss
+        if testing_loss1_norm < min_test_loss:
+          min_test_loss = testing_loss1_norm
+          best_training_loss = training_loss1_norm
+          bestEpoch = epoch
+
 
         with open(eval_log_path, 'a') as f:
           f.write('%d  %.3f %.3f\n' %
@@ -145,6 +160,14 @@ def train(args):
         trainarea, trainacc = ROC(trainloader, net, use_gpu=args.use_gpu)
         #print 'training, area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (trainarea, trainacc)
         testarea, testacc = ROC(testloader, net, use_gpu=args.use_gpu)
+        
+        if testarea > max_testTrain_AUC:
+          max_testTrain_AUC = testarea
+          bestTrainacc = trainacc
+          bestTrainarea = trainarea
+          bestTestacc = testacc
+          bestEpoch = epoch
+
         #print 'testing,  area_under_roc: %.3f, accuracy_at_k1=k2: %.3f' % (testarea, testacc)
         with open(eval_log_path, 'a') as f:
           f.write('%d  %.3f %.3f %.3f %.3f\n' % 
@@ -156,6 +179,16 @@ def train(args):
           os.makedirs(args.checkpoint_dir)
         # Save the network to a file in checkpoint_dir directory.
         save_network(args.checkpoint_dir, net, epoch + 1, use_gpu=args.use_gpu)
+
+  # Print best results
+  if args.mode == 'regression_5min':
+    with open(eval_log_path, 'a') as f:
+      f.write('Best model: %d  %.3f %.3f\n' %
+        (bestEpoch + 1, best_training_loss, min_test_loss))
+  else:
+    with open(eval_log_path, 'a') as f:
+      f.write('Best model: %d  %.3f %.3f %.3f %.3f\n' % 
+          (bestEpoch + 1, bestTrainacc, bestTrainarea,bestTestacc, max_testTrain_AUC))
 
 
 def get_parser():
